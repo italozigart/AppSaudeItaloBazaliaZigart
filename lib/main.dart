@@ -1,13 +1,28 @@
 import 'package:flutter/material.dart';
-
+import 'package:firebase_core/firebase_core.dart';
 import 'splash_screen.dart';
 
-void main() {
-  runApp(const SistemaAcademicoApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: "AIzaSyDTF6W7UYR3uANmEEd3MZx6QgBNTYgT9ho",
+        authDomain: "appsaude-d6c3b.firebaseapp.com",
+        projectId: "appsaude-d6c3b",
+        storageBucket: "appsaude-d6c3b.firebasestorage.app",
+        messagingSenderId: "423283625845",
+        appId: "1:423283625845:web:328ee931edc4a290dccd3c",
+      ),
+    );
+  } catch (error) {
+    debugPrint('Firebase não foi inicializado: $error');
+  }
+  runApp(const SistemaSaudeApp());
 }
 
-class SistemaAcademicoApp extends StatelessWidget {
-  const SistemaAcademicoApp({super.key});
+class SistemaSaudeApp extends StatelessWidget {
+  const SistemaSaudeApp({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'model/user_model.dart';
+import 'services/user_services.dart';
 
 class CadastroScreen extends StatefulWidget {
   const CadastroScreen({super.key});
@@ -11,9 +15,12 @@ class _CadastroScreenState extends State<CadastroScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _nomeController = TextEditingController();
+  final _telefoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
   final _confirmarSenhaController = TextEditingController();
+
+  final UserService _userService = UserService();
 
   bool _senhaVisivel = false;
   bool _confirmarSenhaVisivel = false;
@@ -22,6 +29,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
   @override
   void dispose() {
     _nomeController.dispose();
+    _telefoneController.dispose();
     _emailController.dispose();
     _senhaController.dispose();
     _confirmarSenhaController.dispose();
@@ -29,19 +37,60 @@ class _CadastroScreenState extends State<CadastroScreen> {
   }
 
   Future<void> _cadastrar() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    final isValid = _formKey.currentState?.validate() ?? false;
+    if (!isValid) return;
 
+    FocusScope.of(context).unfocus();
     setState(() => _carregando = true);
 
-    await Future.delayed(const Duration(milliseconds: 600));
+    try {
+      final newUser = UserModel(
+        name: _nomeController.text.trim(),
+        phone: _telefoneController.text.trim(),
+        email: _emailController.text.trim(),
+      );
 
-    if (!mounted) return;
+      await _userService.createUser(
+        user: newUser,
+        password: _senhaController.text.trim(),
+      );
 
-    setState(() => _carregando = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Conta criada com sucesso!'),
+          backgroundColor: Colors.green,
+        ),
+      );
 
-    Navigator.of(context).pop(true);
+      Navigator.of(context).pop(true);
+    } on FirebaseAuthException catch (e) {
+      String message = 'Ocorreu um erro ao cadastrar.';
+      if (e.code == 'email-already-in-use') {
+        message = 'Este e-mail já está cadastrado.';
+      } else if (e.code == 'weak-password') {
+        message = 'A senha informada é muito fraca.';
+      } else if (e.code == 'invalid-email') {
+        message = 'Informe um e-mail válido.';
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro inesperado: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
   }
 
   @override
@@ -118,6 +167,23 @@ class _CadastroScreenState extends State<CadastroScreen> {
 
                         if (value.trim().length < 3) {
                           return 'Nome muito curto';
+                        }
+
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                    TextFormField(
+                      controller: _telefoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Telefone',
+                        hintText: 'Digite seu telefone',
+                        prefixIcon: Icon(Icons.phone_outlined),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Informe seu telefone';
                         }
 
                         return null;

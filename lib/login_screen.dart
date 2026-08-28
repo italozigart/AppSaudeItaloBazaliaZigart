@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'cadastro_screen.dart';
 import 'imc_screen.dart';
@@ -16,6 +17,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
 
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   bool _senhaVisivel = false;
   bool _carregando = false;
 
@@ -31,17 +34,49 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    FocusScope.of(context).unfocus();
     setState(() => _carregando = true);
 
-    await Future.delayed(const Duration(milliseconds: 600));
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _senhaController.text.trim(),
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() => _carregando = false);
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const ImcScreen()),
+      );
+    } on FirebaseAuthException catch (e) {
+      String message = 'Ocorreu um erro ao entrar.';
+      if (e.code == 'user-not-found' ||
+          e.code == 'wrong-password' ||
+          e.code == 'invalid-credential') {
+        message = 'E-mail ou senha inválidos.';
+      } else if (e.code == 'invalid-email') {
+        message = 'Informe um e-mail válido.';
+      } else if (e.code == 'user-disabled') {
+        message = 'Esta conta foi desativada.';
+      }
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const ImcScreen()),
-    );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro inesperado: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
   }
 
   Future<void> _irParaCadastro() async {
