@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'login_screen.dart';
+import 'profile_screen.dart';
 
 class ImcScreen extends StatefulWidget {
   const ImcScreen({super.key});
@@ -71,6 +75,57 @@ class _ImcScreenState extends State<ImcScreen> {
     });
   }
 
+  void _abrirPerfil() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+    );
+  }
+
+  Future<void> _deslogar() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sair da conta'),
+        content: const Text('Deseja realmente sair?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(
+              'Sair',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    try {
+      await FirebaseAuth.instance.signOut();
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao sair: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -88,6 +143,16 @@ class _ImcScreenState extends State<ImcScreen> {
             tooltip: 'Limpar formulário',
             onPressed: limparCampos,
             icon: const Icon(Icons.refresh),
+          ),
+          IconButton(
+            tooltip: 'Meu perfil',
+            onPressed: _abrirPerfil,
+            icon: const Icon(Icons.account_circle_outlined),
+          ),
+          IconButton(
+            tooltip: 'Sair',
+            onPressed: _deslogar,
+            icon: const Icon(Icons.logout),
           ),
         ],
       ),

@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'model/user_model.dart';
 import 'services/user_services.dart';
+import 'utils/formatters.dart';
+import 'utils/validators.dart';
 
 class CadastroScreen extends StatefulWidget {
   const CadastroScreen({super.key});
@@ -155,9 +157,11 @@ class _CadastroScreenState extends State<CadastroScreen> {
                     TextFormField(
                       controller: _nomeController,
                       textCapitalization: TextCapitalization.words,
+                      maxLength: 60,
                       decoration: const InputDecoration(
                         labelText: 'Nome completo',
                         hintText: 'Digite seu nome completo',
+                        counterText: '',
                         prefixIcon: Icon(Icons.person_outline),
                       ),
                       validator: (value) {
@@ -176,14 +180,20 @@ class _CadastroScreenState extends State<CadastroScreen> {
                     TextFormField(
                       controller: _telefoneController,
                       keyboardType: TextInputType.phone,
+                      inputFormatters: [TelefoneInputFormatter()],
                       decoration: const InputDecoration(
                         labelText: 'Telefone',
-                        hintText: 'Digite seu telefone',
+                        hintText: '(DDD) 9NNNN-NNNN',
                         prefixIcon: Icon(Icons.phone_outlined),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Informe seu telefone';
+                        }
+
+                        final digits = value.replaceAll(RegExp(r'\D'), '');
+                        if (digits.length != 11) {
+                          return 'Telefone incompleto';
                         }
 
                         return null;
@@ -217,7 +227,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
                       obscureText: !_senhaVisivel,
                       decoration: InputDecoration(
                         labelText: 'Senha',
-                        hintText: 'Crie uma senha',
+                        hintText: 'Mín. 6 caracteres, 1 maiúscula e 1 especial',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -230,17 +240,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
                           },
                         ),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Crie uma senha';
-                        }
-
-                        if (value.length < 6) {
-                          return 'A senha deve ter ao menos 6 caracteres';
-                        }
-
-                        return null;
-                      },
+                      validator: validarForcaSenha,
                     ),
                     const SizedBox(height: 15),
                     TextFormField(

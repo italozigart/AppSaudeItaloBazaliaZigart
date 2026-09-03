@@ -65,6 +65,58 @@ class UserService {
     });
   }
 
+  // Reautentica o usuário com a senha atual. O Firebase exige isso antes
+  // de qualquer operação sensível (trocar e-mail ou senha), ou lança o
+  // erro "requires-recent-login" se o login foi feito há muito tempo.
+  Future<void> _reauthenticate(String currentPassword) async {
+    final user = _auth.currentUser;
+    if (user == null || user.email == null) {
+      throw Exception("Usuário não autenticado");
+    }
+
+    final credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: currentPassword,
+    );
+
+    await user.reauthenticateWithCredential(credential);
+  }
+
+  // Atualiza o e-mail de acesso.
+  // Importante: nas versões atuais do firebase_auth o método antigo
+  // updateEmail() foi removido. O fluxo correto é verifyBeforeUpdateEmail,
+  // que envia um link de confirmação para o e-mail novo — a troca só
+  // é efetivada no Firebase Auth depois que o usuário clica nesse link.
+  // Aqui já atualizamos o Firestore com o e-mail novo (para refletir no
+  // app), mas o login continua exigindo o e-mail atual até a confirmação.
+  Future<void> updateEmail({
+    required String newEmail,
+    required String currentPassword,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception("Usuário não autenticado");
+
+    await _reauthenticate(currentPassword);
+    await user.verifyBeforeUpdateEmail(newEmail);
+
+    await _usersRef.doc(user.uid).update({
+      'email': newEmail,
+      'updatedAt': DateTime.now(),
+    });
+  }
+
+  // Atualiza a senha de acesso. Também exige reautenticação recente.
+  Future<void> updatePassword({
+    required String newPassword,
+    required String currentPassword,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception("Usuário não autenticado");
+
+    await _reauthenticate(currentPassword);
+    await user.updatePassword(newPassword);
+  }
+
   Future<void> deleteAccount() async {
     User? currentUser = _auth.currentUser;
     if (currentUser == null) return;
