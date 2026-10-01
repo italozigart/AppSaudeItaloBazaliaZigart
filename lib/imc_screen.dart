@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
-import 'login_screen.dart';
-import 'profile_screen.dart';
 
 class ImcScreen extends StatefulWidget {
   const ImcScreen({super.key});
@@ -44,22 +40,22 @@ class _ImcScreenState extends State<ImcScreen> {
     final double imc = peso / (altura * altura);
 
     setState(() {
-  _imc = imc;
+      _imc = imc;
 
-  if (imc < 18.5) {
-    _resultado = 'Abaixo do Peso';
-  } else if (imc < 25) {
-    _resultado = 'Peso Normal';
-  } else if (imc < 30) {
-    _resultado = 'Sobrepeso';
-  } else if (imc < 35) {
-    _resultado = 'Obesidade Grau I';
-  } else if (imc < 40) {
-    _resultado = 'Obesidade Grau II';
-  } else {
-    _resultado = 'Obesidade Grau III';
-  }
-});
+      if (imc < 18.5) {
+        _resultado = 'Abaixo do Peso';
+      } else if (imc < 25) {
+        _resultado = 'Peso Normal';
+      } else if (imc < 30) {
+        _resultado = 'Sobrepeso';
+      } else if (imc < 35) {
+        _resultado = 'Obesidade Grau I';
+      } else if (imc < 40) {
+        _resultado = 'Obesidade Grau II';
+      } else {
+        _resultado = 'Obesidade Grau III';
+      }
+    });
   }
 
   void limparCampos() {
@@ -73,57 +69,6 @@ class _ImcScreenState extends State<ImcScreen> {
       _imc = null;
       _resultado = null;
     });
-  }
-
-  void _abrirPerfil() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ProfileScreen()),
-    );
-  }
-
-  Future<void> _deslogar() async {
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sair da conta'),
-        content: const Text('Deseja realmente sair?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text(
-              'Sair',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmar != true) return;
-
-    try {
-      await FirebaseAuth.instance.signOut();
-
-      if (!mounted) return;
-
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao sair: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   @override
@@ -143,16 +88,6 @@ class _ImcScreenState extends State<ImcScreen> {
             tooltip: 'Limpar formulário',
             onPressed: limparCampos,
             icon: const Icon(Icons.refresh),
-          ),
-          IconButton(
-            tooltip: 'Meu perfil',
-            onPressed: _abrirPerfil,
-            icon: const Icon(Icons.account_circle_outlined),
-          ),
-          IconButton(
-            tooltip: 'Sair',
-            onPressed: _deslogar,
-            icon: const Icon(Icons.logout),
           ),
         ],
       ),
@@ -303,100 +238,97 @@ class _ImcScreenState extends State<ImcScreen> {
   }
 
   Widget _buildResultado() {
-  Color cor;
+    Color cor;
 
-  if (_resultado == 'Peso Normal') {
-    cor = Colors.green;
-  } else if (_resultado == 'Abaixo do Peso' ||
-      _resultado == 'Sobrepeso') {
-    cor = Colors.orange;
-  } else {
-    cor = Colors.red;
-  }
+    if (_resultado == 'Peso Normal') {
+      cor = Colors.green;
+    } else if (_resultado == 'Abaixo do Peso' || _resultado == 'Sobrepeso') {
+      cor = Colors.orange;
+    } else {
+      cor = Colors.red;
+    }
 
-  return Card(
-    elevation: 4,
-    margin: EdgeInsets.zero,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          const Text(
-            'Resultado do IMC',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 20),
-          CircleAvatar(
-            radius: 42,
-            backgroundColor: cor.withOpacity(0.12),
-            child: Icon(
-              Icons.monitor_weight_outlined,
-              size: 50,
-              color: cor,
-            ),
-          ),
-          const SizedBox(height: 15),
-          Text(
-            _nomeController.text.isEmpty
-                ? 'Resultado'
-                : _nomeController.text,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Altura: ${_alturaController.text} m | '
-            'Peso: ${_pesoController.text} kg',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-            ),
-          ),
-          const Divider(height: 30),
-          const Text(
-            'Seu IMC',
-            style: TextStyle(
-              fontSize: 15,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            _imc!.toStringAsFixed(2),
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: cor,
-            ),
-          ),
-          const SizedBox(height: 15),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 10,
-            ),
-            decoration: BoxDecoration(
-              color: cor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Text(
-              _resultado!,
+    return Card(
+      elevation: 4,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const Text(
+              'Resultado do IMC',
               style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            CircleAvatar(
+              radius: 42,
+              backgroundColor: cor.withOpacity(0.12),
+              child: Icon(
+                Icons.monitor_weight_outlined,
+                size: 50,
+                color: cor,
+              ),
+            ),
+            const SizedBox(height: 15),
+            Text(
+              _nomeController.text.isEmpty ? 'Resultado' : _nomeController.text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Altura: ${_alturaController.text} m | '
+              'Peso: ${_pesoController.text} kg',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const Divider(height: 30),
+            const Text(
+              'Seu IMC',
+              style: TextStyle(
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              _imc!.toStringAsFixed(2),
+              style: TextStyle(
+                fontSize: 36,
                 fontWeight: FontWeight.bold,
                 color: cor,
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 15),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 10,
+              ),
+              decoration: BoxDecoration(
+                color: cor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Text(
+                _resultado!,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: cor,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-    }
+    );
+  }
 }
